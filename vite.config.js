@@ -1,0 +1,50 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import basicSsl from '@vitejs/plugin-basic-ssl';
+import fs from 'fs';
+import path from 'path';
+
+function serveOnnxStatic() {
+  return {
+    name: 'serve-onnx-static',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url && (req.url.includes('ort-wasm') || req.url.includes('ort.'))) {
+          const cleanUrl = req.url.split('?')[0].replace(/^\//, '');
+          const filePath = path.resolve(process.cwd(), 'public', cleanUrl);
+
+          if (fs.existsSync(filePath)) {
+            if (filePath.endsWith('.mjs') || filePath.endsWith('.js')) {
+              res.setHeader('Content-Type', 'application/javascript');
+            } else if (filePath.endsWith('.wasm')) {
+              res.setHeader('Content-Type', 'application/wasm');
+            }
+            res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+            res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+            return fs.createReadStream(filePath).pipe(res);
+          }
+        }
+        next();
+      });
+    }
+  };
+}
+
+export default defineConfig({
+  root: process.cwd(),
+  plugins: [basicSsl(), serveOnnxStatic(), react()],
+  server: {
+    host: true,
+    port: 3000,
+    watch: {
+      ignored: ['**/*.wasm', '**/*.onnx', '**/public/*.mjs', '**/node_modules/**']
+    },
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'credentialless'
+    }
+  },
+  optimizeDeps: {
+    exclude: ['onnxruntime-web']
+  }
+});

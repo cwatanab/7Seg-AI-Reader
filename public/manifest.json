@@ -1,0 +1,17 @@
+{
+  "name": "7Seg AI Reader",
+  "short_name": "7Seg AI Reader",
+  "description": "7セグメント液晶デジタルの高精度リアルタイムAI読み取りアプリ",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#090d16",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

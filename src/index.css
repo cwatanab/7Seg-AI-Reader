@@ -1,0 +1,432 @@
+/* Apple Design System tokens & styles (DESIGN.md - Strict Implementation) */
+
+:root {
+  /* Brand & Accent Colors */
+  --apple-primary: #0066cc;
+  --apple-primary-focus: #0071e3;
+  --apple-primary-on-dark: #2997ff;
+  
+  /* Surface Colors */
+  --apple-canvas: #ffffff;
+  --apple-canvas-parchment: #f5f5f7;
+  --apple-surface-pearl: #fafafc;
+  --apple-surface-tile-1: #272729;
+  --apple-surface-tile-2: #2a2a2c;
+  --apple-surface-tile-3: #252527;
+  --apple-surface-black: #000000;
+  --apple-surface-chip-translucent: rgba(210, 210, 215, 0.64);
+  
+  /* Text / Ink Colors */
+  --apple-ink: #1d1d1f;
+  --apple-body: #1d1d1f;
+  --apple-body-on-dark: #ffffff;
+  --apple-body-muted: #cccccc;
+  --apple-ink-muted-80: #333333;
+  --apple-ink-muted-48: #7a7a7a;
+  
+  /* Hairlines & Borders */
+  --apple-divider-soft: #f0f0f0;
+  --apple-hairline: #e0e0e0;
+  --apple-border-translucent: rgba(0, 0, 0, 0.08);
+
+  /* Typography Stacks */
+  --font-display: "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
+
+  /* Border Radii */
+  --rounded-none: 0px;
+  --rounded-xs: 5px;
+  --rounded-sm: 8px;
+  --rounded-md: 11px;
+  --rounded-lg: 18px;
+  --rounded-pill: 9999px;
+  --rounded-full: 9999px;
+
+  /* Spacing Scale */
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 17px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  --spacing-section: 80px;
+
+  /* Elevational Product Shadow */
+  --apple-product-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100vw;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--apple-surface-black);
+  color: var(--apple-ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100vw;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   Typography Classes (DESIGN.md Table)
+   ========================================================================== */
+
+.typo-hero-display {
+  font-family: var(--font-display);
+  font-size: 56px;
+  font-weight: 600;
+  line-height: 1.07;
+  letter-spacing: -0.28px;
+  color: var(--apple-ink);
+}
+
+.typo-display-lg {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.10;
+  letter-spacing: 0px;
+  color: var(--apple-ink);
+}
+
+.typo-display-md {
+  font-family: var(--font-body);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+  color: var(--apple-ink);
+}
+
+.typo-lead {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: 0.196px;
+  color: var(--apple-ink-muted-48);
+}
+
+.typo-tagline {
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.19;
+  letter-spacing: 0.231px;
+  color: var(--apple-ink);
+}
+
+.typo-body-strong {
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: -0.374px;
+  color: var(--apple-ink);
+}
+
+.typo-body {
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+  color: var(--apple-ink);
+}
+
+.typo-caption {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.43;
+  letter-spacing: -0.224px;
+  color: var(--apple-ink-muted-48);
+}
+
+.typo-fine-print {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.0;
+  letter-spacing: -0.12px;
+  color: var(--apple-ink-muted-48);
+}
+
+/* Responsive Hero Display Adjustment */
+@media (max-width: 1068px) {
+  .typo-hero-display {
+    font-size: 40px;
+  }
+}
+@media (max-width: 640px) {
+  .typo-hero-display {
+    font-size: 34px;
+  }
+}
+@media (max-width: 419px) {
+  .typo-hero-display {
+    font-size: 28px;
+  }
+}
+
+/* ==========================================================================
+   Navigation Components (DESIGN.md)
+   ========================================================================== */
+
+/* global-nav: Pinned thin black top bar (44px) */
+.apple-global-nav {
+  height: 44px;
+  background-color: var(--apple-surface-black);
+  color: var(--apple-body-on-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-lg);
+  font-size: 12px;
+  letter-spacing: -0.12px;
+  position: relative;
+  z-index: 50;
+}
+
+.apple-global-nav-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.2px;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+/* sub-nav-frosted: Frosted glass sub-nav (52px) */
+.apple-sub-nav-frosted {
+  height: 52px;
+  background-color: rgba(245, 245, 247, 0.8);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--apple-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-xl);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+/* ==========================================================================
+   Button Components (DESIGN.md)
+   ========================================================================== */
+
+/* button-primary: Action Blue full-pill CTA (11px 22px) */
+.apple-button-primary {
+  background-color: var(--apple-primary);
+  color: var(--apple-body-on-dark);
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.0;
+  letter-spacing: -0.374px;
+  border: none;
+  border-radius: var(--rounded-pill);
+  padding: 11px 22px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  outline: none;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.apple-button-primary:focus-visible {
+  outline: 2px solid var(--apple-primary-focus);
+  outline-offset: 2px;
+}
+
+/* Active micro-interaction: scale(0.95) across all buttons */
+.apple-button-primary:active {
+  transform: scale(0.95);
+}
+
+/* button-secondary-pill: Ghost pill CTA (11px 22px) */
+.apple-button-secondary-pill {
+  background-color: transparent;
+  color: var(--apple-primary);
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.0;
+  letter-spacing: -0.374px;
+  border: 1px solid var(--apple-primary);
+  border-radius: var(--rounded-pill);
+  padding: 11px 22px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.apple-button-secondary-pill:active {
+  transform: scale(0.95);
+}
+
+/* button-dark-utility: Utility rect (8px radius, 8px 15px) */
+.apple-button-dark-utility {
+  background-color: var(--apple-ink);
+  color: var(--apple-body-on-dark);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.29;
+  letter-spacing: -0.224px;
+  border: none;
+  border-radius: var(--rounded-sm);
+  padding: 8px 15px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xxs);
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.apple-button-dark-utility:active {
+  transform: scale(0.95);
+}
+
+/* button-icon-circular: Floating circular control (44px x 44px) */
+.apple-button-icon-circular {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--rounded-full);
+  background-color: var(--apple-surface-chip-translucent);
+  color: var(--apple-ink);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.apple-button-icon-circular:hover {
+  background-color: rgba(210, 210, 215, 0.9);
+}
+
+.apple-button-icon-circular:active {
+  transform: scale(0.95);
+}
+
+/* ==========================================================================
+   Cards & Containers (DESIGN.md)
+   ========================================================================== */
+
+/* store-utility-card: 18px radius, 24px padding, 1px solid hairline */
+.apple-store-utility-card {
+  background-color: var(--apple-canvas);
+  color: var(--apple-ink);
+  border: 1px solid var(--apple-hairline);
+  border-radius: var(--rounded-lg);
+  padding: var(--spacing-lg);
+  box-shadow: none; /* NO shadow on cards per DESIGN.md */
+}
+
+/* Single Unified Floating Bar (Slim & Compact fit-content status + settings) */
+.apple-unified-bar {
+  height: 38px;
+  width: fit-content;
+  background-color: var(--apple-surface-chip-translucent);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--rounded-pill);
+  color: var(--apple-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 0 4px 0 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  transition: all 0.2s ease;
+}
+
+.apple-unified-bar-action {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--rounded-full);
+  background-color: rgba(255, 255, 255, 0.2);
+  color: var(--apple-ink);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.apple-unified-bar-action:hover {
+  background-color: rgba(255, 255, 255, 0.35);
+}
+
+.apple-unified-bar-action:active {
+  transform: scale(0.92);
+}
+
+.apple-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--apple-primary);
+}
+
+/* Digital LCD Display Frame inside card */
+.apple-lcd-display-frame {
+  background: var(--apple-surface-tile-2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--rounded-md);
+  font-family: var(--font-mono);
+  color: #ffffff;
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+/* Universal Animations */
+@keyframes appleSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: appleSpin 0.8s linear infinite;
+}
+
+@keyframes shrinkBar {
+  from { width: 100%; }
+  to { width: 0%; }
+}
