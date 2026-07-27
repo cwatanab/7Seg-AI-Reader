@@ -57,10 +57,10 @@ export function drawDetections(
     const mainFontSize = Math.max(12, Math.min(16, Math.round(bh * 0.18)));
     const smallFontSize = Math.max(9, Math.round(mainFontSize * 0.72));
 
-    ctx.font = `600 ${mainFontSize}px "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.font = `600 ${mainFontSize}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     const mainWidth = ctx.measureText(labelText).width;
 
-    ctx.font = `400 ${smallFontSize}px "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.font = `400 ${smallFontSize}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     const confWidth = ctx.measureText(confText).width;
 
     const paddingX = 6;
@@ -77,12 +77,12 @@ export function drawDetections(
 
     // 主文字 (検出ラベル)
     ctx.fillStyle = '#ffffff';
-    ctx.font = `600 ${mainFontSize}px "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.font = `600 ${mainFontSize}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.fillText(labelText, bx1 + paddingX, labelY + mainFontSize - 1);
 
     // 小さな文字 (信頼度 %)
     ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.font = `400 ${smallFontSize}px "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.font = `400 ${smallFontSize}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.fillText(confText, bx1 + paddingX + mainWidth + gap, labelY + mainFontSize - 1);
   });
 }
