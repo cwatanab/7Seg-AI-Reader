@@ -341,7 +341,7 @@ export let YOLO_CLASS_NAMES: string[] = [...YOLO_CLASS_NAMES_12];
  */
 export async function runInference(
   source: HTMLVideoElement | HTMLCanvasElement | HTMLImageElement,
-  confThreshold = 0.40,
+  confThreshold = 0.70,
   convertMono = true
 ): Promise<InferenceResult> {
   if (!session) {

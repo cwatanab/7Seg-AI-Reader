@@ -19,7 +19,7 @@ export const LcdReader: React.FC = () => {
 
   // カメラ & 設定
   const [isStreaming, setIsStreaming] = useState(false);
-  const [confThreshold, setConfThreshold] = useState<number>(0.40);
+  const [confThreshold, setConfThreshold] = useState<number>(0.70);
   const [convertMono, setConvertMono] = useState<boolean>(true);
   const zoomLevel = 1.0;
   const [showSettings, setShowSettings] = useState<boolean>(false);
