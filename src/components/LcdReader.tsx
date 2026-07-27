@@ -381,6 +381,29 @@ export const LcdReader: React.FC = () => {
         </div>
       )}
 
+      {/* モデル読み込みエラー表示 */}
+      {modelError && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 55,
+            background: 'rgba(10, 12, 16, 0.96)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            color: '#ff4d4f',
+            textAlign: 'center',
+          }}
+        >
+          <div className="typo-body-strong" style={{ fontSize: '16px', maxWidth: '320px' }}>
+            {modelError}
+          </div>
+        </div>
+      )}
+
       {/* スキャン確定判定ポップアップ */}
       {popupResult && (
         <DetectionPopup

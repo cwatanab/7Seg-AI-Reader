@@ -515,5 +515,3 @@ export function groupBoxesIntoLines(boxes: BoundingBox[]): LineResult[] {
     };
   });
 }
-
-
