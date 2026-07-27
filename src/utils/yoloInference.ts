@@ -81,11 +81,11 @@ export async function loadYoloModel(
     // 標準の .onnx モデルの場合は WebGPU -> WebGL -> WASM の順で試行
     const isOrtOrInt8 = modelPath.endsWith('.ort') || modelPath.includes('int8');
     const providersToTry = isOrtOrInt8
-      ? [{ name: 'CPU (WASM / SIMD)', provider: 'wasm' }]
+      ? [{ name: 'WASM', provider: 'wasm' }]
       : [
-          { name: 'GPU (WebGPU)', provider: 'webgpu' },
-          { name: 'GPU (WebGL)', provider: 'webgl' },
-          { name: 'CPU (WASM / SIMD)', provider: 'wasm' },
+          { name: 'WebGPU', provider: 'webgpu' },
+          { name: 'WebGL', provider: 'webgl' },
+          { name: 'WASM', provider: 'wasm' },
         ];
 
     const modelUrlWithCacheBuster = `${modelPath}?t=${Date.now()}`;
@@ -94,9 +94,9 @@ export async function loadYoloModel(
       try {
         if (onProgress) onProgress(`${item.name} を初期化中...`);
         
-        // 1. まずメモリ上の modelBuffer からセッション生成を試行
+        // 1. まずメモリ上の modelBuffer からセッション生成を試行 (slice(0)でArrayBuffer detach防止)
         try {
-          session = await ort.InferenceSession.create(modelBuffer, {
+          session = await ort.InferenceSession.create(modelBuffer.slice(0), {
             executionProviders: [item.provider],
             graphOptimizationLevel: 'all',
           });
@@ -123,8 +123,8 @@ export async function loadYoloModel(
 
         // ロードされたモデルに応じてクラス名マップを自動設定
         if (modelPath.includes('yolo26n')) {
-          YOLO_CLASS_NAMES = [...YOLO_CLASS_NAMES_10];
-          console.log('🏷️ Loaded 10-class model map (0-9) for yolo26n:', YOLO_CLASS_NAMES);
+          YOLO_CLASS_NAMES = [...YOLO_CLASS_NAMES_12];
+          console.log('🏷️ Loaded 12-class model map (-, ., 0-9) for yolo26n:', YOLO_CLASS_NAMES);
         } else {
           YOLO_CLASS_NAMES = [...YOLO_CLASS_NAMES_16];
           console.log('🏷️ Loaded 16-class model map for yolo26s:', YOLO_CLASS_NAMES);
@@ -326,15 +326,15 @@ function float32ToFloat16Array(float32Array: Float32Array): Uint16Array {
   return float16Array;
 }
 
-export const YOLO_CLASS_NAMES_10: string[] = [
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+export const YOLO_CLASS_NAMES_12: string[] = [
+  '-', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
 ];
 
 export const YOLO_CLASS_NAMES_16: string[] = [
   '-', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot', 'h', 'kW', 'null'
 ];
 
-export let YOLO_CLASS_NAMES: string[] = [...YOLO_CLASS_NAMES_10];
+export let YOLO_CLASS_NAMES: string[] = [...YOLO_CLASS_NAMES_12];
 
 /**
  * YOLO26 推論実行
@@ -385,7 +385,7 @@ export async function runInference(
           executionProviders: ['wasm'],
           graphOptimizationLevel: 'all',
         });
-        activeProvider = 'CPU (WASM / SIMD)';
+        activeProvider = 'WASM';
         outputMap = await session.run(feeds);
       } else {
         throw err;

@@ -14,7 +14,7 @@
   --apple-surface-tile-2: #2a2a2c;
   --apple-surface-tile-3: #252527;
   --apple-surface-black: #000000;
-  --apple-surface-chip-translucent: rgba(210, 210, 215, 0.64);
+  --apple-surface-chip-translucent: rgba(210, 210, 215, 0.4);
   
   /* Text / Ink Colors */
   --apple-ink: #1d1d1f;

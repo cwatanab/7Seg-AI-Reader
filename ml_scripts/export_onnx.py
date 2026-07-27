@@ -20,15 +20,16 @@ def export_to_onnx(model_path=None):
     print(f"モデル '{model_path}' を ONNX 形式に変換中...")
     model = YOLO(model_path)
 
-    # ONNX 形式へエクスポート (出力先: models/ フォルダ)
+    # ONNX 形式へエクスポート (Webブラウザ/onnxruntime-web 互換のため opset=17 を指定)
     onnx_file = model.export(
         format="onnx",
         imgsz=640,
         dynamic=False,
-        simplify=True
+        simplify=True,
+        opset=17
     )
 
-    # 出力された ONNX ファイルを models/ ディレクトリへ移動（必要な場合）
+    models_dir.mkdir(parents=True, exist_ok=True)
     onnx_path = Path(onnx_file)
     target_path = models_dir / onnx_path.name
     if onnx_path.resolve() != target_path.resolve() and onnx_path.exists():
@@ -36,6 +37,14 @@ def export_to_onnx(model_path=None):
             target_path.unlink()
         onnx_path.rename(target_path)
         onnx_file = str(target_path)
+
+    # Web アプリ用 public ディレクトリにも自動コピー
+    public_dir = PROJECT_ROOT / "public"
+    if public_dir.exists():
+        import shutil
+        public_target = public_dir / onnx_path.name
+        shutil.copy2(target_path, public_target)
+        print(f"public ディレクトリへコピーしました: {public_target}")
 
     print(f"\n変換完了！ ONNXモデルファイル: {onnx_file}")
     return onnx_file

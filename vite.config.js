@@ -9,19 +9,27 @@ function serveOnnxStatic() {
     name: 'serve-onnx-static',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        if (req.url && (req.url.includes('ort-wasm') || req.url.includes('ort.'))) {
+        if (req.url) {
           const cleanUrl = req.url.split('?')[0].replace(/^\//, '');
           const filePath = path.resolve(process.cwd(), 'public', cleanUrl);
 
-          if (fs.existsSync(filePath)) {
-            if (filePath.endsWith('.mjs') || filePath.endsWith('.js')) {
-              res.setHeader('Content-Type', 'application/javascript');
-            } else if (filePath.endsWith('.wasm')) {
+          if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+            if (cleanUrl.endsWith('.onnx') || cleanUrl.endsWith('.ort')) {
+              res.setHeader('Content-Type', 'application/octet-stream');
+              res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+              res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+              return fs.createReadStream(filePath).pipe(res);
+            } else if (cleanUrl.endsWith('.wasm')) {
               res.setHeader('Content-Type', 'application/wasm');
+              res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+              res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+              return fs.createReadStream(filePath).pipe(res);
+            } else if (cleanUrl.endsWith('.mjs') || cleanUrl.endsWith('.js')) {
+              res.setHeader('Content-Type', 'application/javascript');
+              res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+              res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+              return fs.createReadStream(filePath).pipe(res);
             }
-            res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-            res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
-            return fs.createReadStream(filePath).pipe(res);
           }
         }
         next();
@@ -36,6 +44,11 @@ export default defineConfig({
   server: {
     host: true,
     port: 3000,
+    cors: true,
+    fs: {
+      strict: false,
+      allow: ['.']
+    },
     watch: {
       ignored: ['**/*.wasm', '**/*.onnx', '**/public/*.mjs', '**/node_modules/**']
     },

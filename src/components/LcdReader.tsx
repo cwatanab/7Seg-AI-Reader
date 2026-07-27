@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Camera, Sliders, Check, X } from 'lucide-react';
+import { Camera, Sliders, Check, X, Moon, Power, Play } from 'lucide-react';
 import {
   loadYoloModel,
   runInference,
@@ -17,8 +17,13 @@ export const LcdReader: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [confThreshold, setConfThreshold] = useState<number>(0.40);
   const [convertMono, setConvertMono] = useState<boolean>(true);
-  const zoomLevel = 1.2; // 固定 x1.2 ズーム
+  const zoomLevel = 1.0; // 拡大なし (x1.0)
   const [showSettings, setShowSettings] = useState<boolean>(false);
+
+  // スリープ & カメラ解放ステート
+  const [isSleeping, setIsSleeping] = useState(false);
+  const [sleepReason, setSleepReason] = useState<'timeout' | 'background' | null>(null);
+  const lastDetectionTimeRef = useRef<number>(performance.now());
 
   // 検出ステート
   const [inferenceTime, setInferenceTime] = useState<number>(0);
@@ -38,6 +43,66 @@ export const LcdReader: React.FC = () => {
   const animationFrameId = useRef<number | null>(null);
   const lastFrameTime = useRef<number>(performance.now());
   const frameCount = useRef<number>(0);
+
+  // カメラ停止＆トラック解放
+  const stopCamera = useCallback(() => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setIsStreaming(false);
+  }, []);
+
+  // スリープモードへ移行
+  const enterSleepMode = useCallback(
+    (reason: 'timeout' | 'background') => {
+      stopCamera();
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+        animationFrameId.current = null;
+      }
+      setIsSleeping(true);
+      setSleepReason(reason);
+    },
+    [stopCamera]
+  );
+
+  // カメラ起動
+  const startCamera = useCallback(async () => {
+    if (!videoRef.current) return;
+
+    try {
+      const constraints: MediaStreamConstraints = {
+        audio: false,
+        video: {
+          facingMode: { ideal: 'environment' },
+        },
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('muted', 'true');
+        videoRef.current.muted = true;
+        await videoRef.current.play();
+        setIsStreaming(true);
+        lastDetectionTimeRef.current = performance.now();
+      }
+    } catch (err) {
+      console.error('Camera access denied or unavailable:', err);
+      alert('カメラへのアクセスに失敗しました。ブラウザの設定でカメラのアクセス権限を許可してください。');
+    }
+  }, []);
+
+  // スリープからの復帰 (Wake up)
+  const wakeUp = useCallback(async () => {
+    setIsSleeping(false);
+    setSleepReason(null);
+    lastDetectionTimeRef.current = performance.now();
+    await startCamera();
+  }, [startCamera]);
 
   // モデル初期化＆自動カメラ起動
   useEffect(() => {
@@ -64,35 +129,9 @@ export const LcdReader: React.FC = () => {
 
     return () => {
       isMounted = false;
+      stopCamera();
     };
-  }, []);
-
-  // カメラ起動
-  const startCamera = useCallback(async () => {
-    if (!videoRef.current) return;
-
-    try {
-      const constraints: MediaStreamConstraints = {
-        audio: false,
-        video: {
-          facingMode: { ideal: 'environment' },
-        },
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute('playsinline', 'true');
-        videoRef.current.setAttribute('muted', 'true');
-        videoRef.current.muted = true;
-        await videoRef.current.play();
-        setIsStreaming(true);
-      }
-    } catch (err) {
-      console.error('Camera access denied or unavailable:', err);
-      alert('カメラへのアクセスに失敗しました。ブラウザの設定でカメラのアクセス権限を許可してください。');
-    }
-  }, []);
+  }, [startCamera, stopCamera]);
 
   // カメラデバイスの光学/ハードウェアズーム適用
   useEffect(() => {
@@ -201,14 +240,23 @@ export const LcdReader: React.FC = () => {
   const lastProcessTimeRef = useRef<number>(0);
   const targetFpsInterval = 1000 / 5; // 5 FPS 制限 (200ms間隔)
 
-  // 推論ループ (15 FPS 制限)
+  // 推論ループ
   const processLoop = useCallback(() => {
-    if (!videoRef.current || !videoRef.current.videoWidth || !modelLoaded) {
+    if (isSleeping || !videoRef.current || !videoRef.current.videoWidth || !modelLoaded) {
       animationFrameId.current = requestAnimationFrame(processLoop);
       return;
     }
 
     const now = performance.now();
+
+    // 30秒間未検出チェック (30,000 ms)
+    const timeSinceLastDetection = now - lastDetectionTimeRef.current;
+    if (timeSinceLastDetection >= 30000) {
+      console.log('⏰ 30秒間検出がないため、カメラを解放してスリープへ移行します');
+      enterSleepMode('timeout');
+      return;
+    }
+
     const elapsed = now - lastProcessTimeRef.current;
 
     if (elapsed < targetFpsInterval) {
@@ -245,6 +293,11 @@ export const LcdReader: React.FC = () => {
           setCurrentResult(res);
           setInferenceTime(res.inferenceTimeMs);
 
+          // ボックス検出があった場合は最終検出タイムスタンプを更新
+          if (res.boxes && res.boxes.length > 0) {
+            lastDetectionTimeRef.current = performance.now();
+          }
+
           const currentVal = res.digitsString.trim();
           const now = performance.now();
 
@@ -279,23 +332,14 @@ export const LcdReader: React.FC = () => {
     }
 
     animationFrameId.current = requestAnimationFrame(processLoop);
-  }, [modelLoaded, confThreshold, convertMono]);
+  }, [modelLoaded, confThreshold, convertMono, isSleeping, enterSleepMode]);
 
-  // バックグラウンド移行時の自動停止 & 復帰処理 (visibilitychange)
+  // バックグラウンド移行時のカメラ解放 & スリープ処理 (visibilitychange)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        // タブ非表示・バックグラウンド化時に推論ループを一時停止
-        if (animationFrameId.current) {
-          cancelAnimationFrame(animationFrameId.current);
-          animationFrameId.current = null;
-        }
-      } else {
-        // フォアグラウンド復帰時に推論ループを自動再開
-        if (isStreaming && modelLoaded && !animationFrameId.current) {
-          lastProcessTimeRef.current = performance.now();
-          animationFrameId.current = requestAnimationFrame(processLoop);
-        }
+        // タブ非表示・バックグラウンド化時に即座にカメラを解放してスリープへ移行
+        enterSleepMode('background');
       }
     };
 
@@ -303,10 +347,10 @@ export const LcdReader: React.FC = () => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isStreaming, modelLoaded, processLoop]);
+  }, [enterSleepMode]);
 
   useEffect(() => {
-    if (isStreaming && modelLoaded) {
+    if (isStreaming && modelLoaded && !isSleeping) {
       animationFrameId.current = requestAnimationFrame(processLoop);
     } else if (animationFrameId.current) {
       cancelAnimationFrame(animationFrameId.current);
@@ -316,7 +360,7 @@ export const LcdReader: React.FC = () => {
         cancelAnimationFrame(animationFrameId.current);
       }
     };
-  }, [isStreaming, modelLoaded, processLoop]);
+  }, [isStreaming, modelLoaded, isSleeping, processLoop]);
 
   return (
     <div
@@ -381,38 +425,70 @@ export const LcdReader: React.FC = () => {
         />
       </div>
 
-      {/* 上部中央: スリム統合カプセルバー (中央配置 & 上部余白圧縮) */}
+      {/* 上部中央: 単一カプセル型 2行統合ヘッダーバー */}
       <div
         className="apple-unified-bar"
         style={{
           position: 'absolute',
-          top: 'calc(8px + env(safe-area-inset-top, 0px))',
+          top: 'calc(10px + env(safe-area-inset-top, 0px))',
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 30,
-          fontVariantNumeric: 'tabular-nums',
-          fontFamily: 'var(--font-mono)',
+          height: 'auto',
+          padding: '7px 8px 7px 16px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '12px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', fontSize: '12px' }}>
-          <div className="apple-badge-dot" />
-          <span style={{ display: 'inline-block', minWidth: '48px', textAlign: 'left' }}>
-            FPS: {fps}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+          {/* 1行目: アプリケーションタイトル */}
+          <span
+            style={{
+              fontSize: '13px',
+              fontWeight: 700,
+              color: 'var(--apple-ink)',
+              fontFamily: 'var(--font-display)',
+              letterSpacing: '0.3px',
+              lineHeight: 1.2,
+            }}
+          >
+            7Seg AI Reader
           </span>
-          <span style={{ color: 'var(--apple-hairline)' }}>|</span>
-          <span style={{ display: 'inline-block', minWidth: '44px', textAlign: 'right' }}>
-            {inferenceTime.toFixed(0)}ms
-          </span>
-          <span style={{ color: 'var(--apple-hairline)' }}>|</span>
-          <span style={{ color: 'var(--apple-primary)', fontWeight: 600, display: 'inline-block', whiteSpace: 'nowrap', padding: '0 4px' }}>
-            {providerName}
-          </span>
+
+          {/* 2行目: ステータス情報 (FPS / 推論時間 / プロバイダー) */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '11px',
+              fontVariantNumeric: 'tabular-nums',
+              fontFamily: 'var(--font-mono)',
+              lineHeight: 1.2,
+            }}
+          >
+            <div className="apple-badge-dot" style={{ width: '6px', height: '6px' }} />
+            <span style={{ display: 'inline-block', minWidth: '40px', textAlign: 'left' }}>
+              FPS: {fps}
+            </span>
+            <span style={{ color: 'var(--apple-ink-muted-48)' }}>|</span>
+            <span style={{ display: 'inline-block', minWidth: '36px', textAlign: 'right' }}>
+              {inferenceTime.toFixed(0)}ms
+            </span>
+            <span style={{ color: 'var(--apple-ink-muted-48)' }}>|</span>
+            <span style={{ color: 'var(--apple-primary)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+              {providerName}
+            </span>
+          </div>
         </div>
 
+        {/* 右側: 設定ボタン */}
         <button
           onClick={() => setShowSettings(!showSettings)}
           className="apple-unified-bar-action"
           aria-label="Settings"
+          style={{ width: '30px', height: '30px' }}
         >
           <Sliders size={15} />
         </button>
@@ -424,7 +500,7 @@ export const LcdReader: React.FC = () => {
           className="apple-store-utility-card"
           style={{
             position: 'absolute',
-            top: 'calc(68px + env(safe-area-inset-top, 0px))',
+            top: 'calc(74px + env(safe-area-inset-top, 0px))',
             right: '16px',
             zIndex: 40,
             width: 'calc(100% - 32px)',
@@ -480,11 +556,35 @@ export const LcdReader: React.FC = () => {
         </div>
       )}
 
-      {/* 初期化中スプライト */}
+      {/* 初期化中スピナー (ダークテーマ統一 & ブラー) */}
       {!modelLoaded && !modelError && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'var(--apple-canvas-parchment)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="animate-spin" style={{ width: '48px', height: '48px', border: '3px solid var(--apple-hairline)', borderTopColor: 'var(--apple-primary)', borderRadius: '50%', marginBottom: 'var(--spacing-lg)' }} />
-          <div className="typo-body-strong" style={{ textAlign: 'center' }}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 50,
+            background: 'rgba(10, 12, 16, 0.96)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#ffffff',
+          }}
+        >
+          <div
+            className="animate-spin"
+            style={{
+              width: '48px',
+              height: '48px',
+              border: '3px solid rgba(255, 255, 255, 0.15)',
+              borderTopColor: 'var(--apple-primary)',
+              borderRadius: '50%',
+              marginBottom: 'var(--spacing-lg)',
+            }}
+          />
+          <div className="typo-body-strong" style={{ textAlign: 'center', color: '#ffffff', fontSize: '16px' }}>
             {loadingMsg || 'モデルを準備中...'}
           </div>
         </div>
@@ -557,6 +657,73 @@ export const LcdReader: React.FC = () => {
               }}
             />
           </div>
+        </div>
+      )}
+
+      {/* スリープ状態オーバーレイ (30秒無検出 または バックグラウンド移行) */}
+      {isSleeping && (
+        <div
+          onClick={wakeUp}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 90,
+            background: 'rgba(10, 12, 16, 0.94)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            cursor: 'pointer',
+            textAlign: 'center',
+            animation: 'fadeIn 0.3s ease-out',
+          }}
+        >
+          <div
+            style={{
+              width: '72px',
+              height: '72px',
+              borderRadius: '50%',
+              background: 'rgba(0, 102, 204, 0.15)',
+              border: '1px solid rgba(0, 102, 204, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '20px',
+              color: '#0066cc',
+            }}
+          >
+            <Moon size={36} />
+          </div>
+
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#ffffff', marginBottom: '8px' }}>
+            スリープ中
+          </h2>
+
+          <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.65)', marginBottom: '24px' }}>
+            タップしてカメラを再開
+          </p>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              wakeUp();
+            }}
+            className="apple-button-primary"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 28px',
+              fontSize: '15px',
+              borderRadius: '9999px',
+              boxShadow: '0 4px 14px rgba(0, 102, 204, 0.4)',
+            }}
+          >
+            <Play size={18} fill="currentColor" /> 再開する
+          </button>
         </div>
       )}
     </div>
