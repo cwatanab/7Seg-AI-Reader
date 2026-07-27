@@ -4,7 +4,7 @@ from ultralytics import YOLO
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-def export_to_onnx(model_path=None):
+def export_to_onnx(model_path=None, half=False):
     models_dir = PROJECT_ROOT / "models"
 
     if not model_path:
@@ -16,13 +16,15 @@ def export_to_onnx(model_path=None):
         print(f"エラー: モデルファイル '{model_path}' が見つかりません。")
         return
 
-    print(f"モデル '{model_path}' を ONNX 形式に変換中...")
+    precision = "FP16 (Half Precision)" if half else "FP32 (Single Precision)"
+    print(f"モデル '{model_path}' を ONNX 形式に変換中... [{precision}]")
     model = YOLO(model_path)
 
     # ONNX 形式へエクスポート (Webブラウザ/onnxruntime-web 互換のため opset=17 を指定)
     onnx_file = model.export(
         format="onnx",
         imgsz=640,
+        half=half,
         dynamic=False,
         simplify=True,
         opset=17
