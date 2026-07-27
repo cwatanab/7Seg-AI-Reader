@@ -103,7 +103,7 @@ export const LcdReader: React.FC = () => {
   // モデル初期化＆自動カメラ起動
   useEffect(() => {
     let isMounted = true;
-    loadYoloModel('/7-segment-digits-yolo26n.onnx', (msg) => {
+    loadYoloModel('/7-segment-digits-yolo26n-fp16.onnx', (msg) => {
       if (isMounted) setLoadingMsg(msg);
     })
       .then(({ provider }) => {

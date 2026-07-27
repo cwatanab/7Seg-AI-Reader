@@ -45,7 +45,7 @@ export let activeProvider: string = '初期化中...';
  * ONNX モデルをロードする
  */
 export async function loadYoloModel(
-  modelPath: string = '/7-segment-digits-yolo26n.onnx',
+  modelPath: string = '/7-segment-digits-yolo26n-fp16.onnx',
   onProgress?: (msg: string) => void
 ): Promise<{ session: any; provider: string }> {
   if (session) return { session, provider: activeProvider };
@@ -69,9 +69,9 @@ export async function loadYoloModel(
     if (onProgress) onProgress('モデルデータを読み込み中...');
     const cacheBuster = `?t=${Date.now()}`;
     let response = await fetch(`${modelPath}${cacheBuster}`, { cache: 'no-store' });
-    if (!response.ok && modelPath !== '/7-segment-digits-yolo26n.onnx') {
-      console.warn(`Fallback to default model /7-segment-digits-yolo26n.onnx due to ${response.status}`);
-      response = await fetch(`/7-segment-digits-yolo26n.onnx${cacheBuster}`, { cache: 'no-store' });
+    if (!response.ok && modelPath !== '/7-segment-digits-yolo26n-fp16.onnx') {
+      console.warn(`Fallback to default model /7-segment-digits-yolo26n-fp16.onnx due to ${response.status}`);
+      response = await fetch(`/7-segment-digits-yolo26n-fp16.onnx${cacheBuster}`, { cache: 'no-store' });
     }
     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
     const arrayBuffer = await response.arrayBuffer();
@@ -380,7 +380,7 @@ export async function runInference(
       if (sharedFloat32Data) {
         // WASM でセッション再生成
         const cacheBuster = `?t=${Date.now()}`;
-        const modelUrl = `/7-segment-digits-yolo26n.onnx${cacheBuster}`;
+        const modelUrl = `/7-segment-digits-yolo26n-fp16.onnx${cacheBuster}`;
         session = await ort.InferenceSession.create(modelUrl, {
           executionProviders: ['wasm'],
           graphOptimizationLevel: 'all',
