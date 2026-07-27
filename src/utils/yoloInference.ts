@@ -1,10 +1,11 @@
 import type * as ort from 'onnxruntime-web';
 import * as ortModule from 'onnxruntime-web';
 
-// CDN 版 window.ort があれば優先使用 (Vite / bundle パーサーバグの完全回避)
+// ONNX Runtime のロード設定
 const getOrt = () => {
   const globalOrt = (typeof window !== 'undefined' && (window as any).ort) ? (window as any).ort : ortModule;
-  if (globalOrt.env && globalOrt.env.wasm) {
+  if (globalOrt.env && globalOrt.env.wasm && !globalOrt.env.wasm.wasmPaths) {
+    // デフォルトで npm パッケージの dist またはローカルから取得を試みる
     globalOrt.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/';
   }
   return globalOrt;
@@ -37,17 +38,20 @@ export interface InferenceResult {
   inferenceTimeMs: number;
 }
 
+export const DEFAULT_MODEL_PATH = '/7-segment-digits-yolo26n-fp16.onnx';
 let session: any = null;
 let isLoadingSession = false;
+let currentLoadedModelPath = DEFAULT_MODEL_PATH;
 export let activeProvider: string = '初期化中...';
 
 /**
  * ONNX モデルをロードする
  */
 export async function loadYoloModel(
-  modelPath: string = '/7-segment-digits-yolo26n-fp16.onnx',
+  modelPath: string = DEFAULT_MODEL_PATH,
   onProgress?: (msg: string) => void
 ): Promise<{ session: any; provider: string }> {
+  currentLoadedModelPath = modelPath;
   if (session) return { session, provider: activeProvider };
   if (isLoadingSession) {
     while (isLoadingSession) {
@@ -68,14 +72,29 @@ export async function loadYoloModel(
     // ONNX モデルデータの取得 (ブラウザキャッシュ完全無視オプション付与)
     if (onProgress) onProgress('モデルデータを読み込み中...');
     const cacheBuster = `?t=${Date.now()}`;
-    let response = await fetch(`${modelPath}${cacheBuster}`, { cache: 'no-store' });
-    if (!response.ok && modelPath !== '/7-segment-digits-yolo26n-fp16.onnx') {
-      console.warn(`Fallback to default model /7-segment-digits-yolo26n-fp16.onnx due to ${response.status}`);
-      response = await fetch(`/7-segment-digits-yolo26n-fp16.onnx${cacheBuster}`, { cache: 'no-store' });
+    let response: Response;
+    try {
+      console.log(`📥 Fetching ONNX model from ${modelPath}...`);
+      response = await fetch(`${modelPath}${cacheBuster}`, { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} ${response.statusText}`);
+      }
+    } catch (fetchErr) {
+      console.warn(`⚠️ Failed to fetch model from ${modelPath}:`, fetchErr);
+      const fallbackPath = '/7-segment-digits-yolo26n-fp16.onnx';
+      if (modelPath !== fallbackPath) {
+        console.warn(`🔄 Attempting fallback fetch to FP16 model (${fallbackPath})...`);
+        if (onProgress) onProgress('FP16モデルに切り替えて読み込み中...');
+        response = await fetch(`${fallbackPath}${cacheBuster}`, { cache: 'no-store' });
+        currentLoadedModelPath = fallbackPath;
+      } else {
+        throw fetchErr;
+      }
     }
     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
     const arrayBuffer = await response.arrayBuffer();
     const modelBuffer = new Uint8Array(arrayBuffer);
+    console.log(`📦 Model fetched successfully (${(modelBuffer.byteLength / 1024 / 1024).toFixed(2)} MB)`);
 
     // .ort フォーマットおよび INT8 量子化モデルは WASM 専用最適化フォーマットのため最初から WASM を使用
     // 標準の .onnx モデルの場合は WebGPU -> WebGL -> WASM の順で試行
@@ -122,12 +141,15 @@ export async function loadYoloModel(
         console.log(`🚀 ONNX Warmup completed for ${item.name} in ${warmTime}ms`);
 
         // ロードされたモデルに応じてクラス名マップを自動設定
-        if (modelPath.includes('yolo26n')) {
+        if (modelPath.includes('12class')) {
           YOLO_CLASS_NAMES = [...YOLO_CLASS_NAMES_12];
-          console.log('🏷️ Loaded 12-class model map (-, ., 0-9) for yolo26n:', YOLO_CLASS_NAMES);
-        } else {
+          console.log('🏷️ Loaded 12-class model map (-, ., 0-9):', YOLO_CLASS_NAMES);
+        } else if (modelPath.includes('16class')) {
           YOLO_CLASS_NAMES = [...YOLO_CLASS_NAMES_16];
-          console.log('🏷️ Loaded 16-class model map for yolo26s:', YOLO_CLASS_NAMES);
+          console.log('🏷️ Loaded 16-class model map:', YOLO_CLASS_NAMES);
+        } else {
+          YOLO_CLASS_NAMES = [...YOLO_CLASS_NAMES_10];
+          console.log('🏷️ Loaded 10-class model map (0-9):', YOLO_CLASS_NAMES);
         }
 
         if (onProgress) onProgress(`${item.name} 準備完了！ (${warmTime}ms)`);
@@ -326,6 +348,10 @@ function float32ToFloat16Array(float32Array: Float32Array): Uint16Array {
   return float16Array;
 }
 
+export const YOLO_CLASS_NAMES_10: string[] = [
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+];
+
 export const YOLO_CLASS_NAMES_12: string[] = [
   '-', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
 ];
@@ -334,14 +360,14 @@ export const YOLO_CLASS_NAMES_16: string[] = [
   '-', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot', 'h', 'kW', 'null'
 ];
 
-export let YOLO_CLASS_NAMES: string[] = [...YOLO_CLASS_NAMES_12];
+export let YOLO_CLASS_NAMES: string[] = [...YOLO_CLASS_NAMES_10];
 
 /**
  * YOLO26 推論実行
  */
 export async function runInference(
   source: HTMLVideoElement | HTMLCanvasElement | HTMLImageElement,
-  confThreshold = 0.70,
+  confThreshold = 0.40,
   convertMono = true
 ): Promise<InferenceResult> {
   if (!session) {
@@ -380,7 +406,7 @@ export async function runInference(
       if (sharedFloat32Data) {
         // WASM でセッション再生成
         const cacheBuster = `?t=${Date.now()}`;
-        const modelUrl = `/7-segment-digits-yolo26n-fp16.onnx${cacheBuster}`;
+        const modelUrl = `${currentLoadedModelPath}${cacheBuster}`;
         session = await ort.InferenceSession.create(modelUrl, {
           executionProviders: ['wasm'],
           graphOptimizationLevel: 'all',

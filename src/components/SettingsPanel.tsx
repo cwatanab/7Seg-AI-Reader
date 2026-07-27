@@ -4,16 +4,12 @@ import { Sliders, X } from 'lucide-react';
 interface SettingsPanelProps {
   confThreshold: number;
   onConfThresholdChange: (val: number) => void;
-  convertMono: boolean;
-  onToggleMono: () => void;
   onClose: () => void;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   confThreshold,
   onConfThresholdChange,
-  convertMono,
-  onToggleMono,
   onClose,
 }) => {
   return (
@@ -58,20 +54,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             onChange={(e) => onConfThresholdChange(parseFloat(e.target.value))}
             style={{ width: '100%', accentColor: 'var(--apple-primary)' }}
           />
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span className="typo-caption">モノクロ変換フィルター:</span>
-          <button
-            onClick={onToggleMono}
-            className={convertMono ? 'apple-button-primary' : 'apple-button-secondary-pill'}
-            style={{
-              padding: '6px 16px',
-              fontSize: '14px',
-            }}
-          >
-            {convertMono ? 'ON' : 'OFF'}
-          </button>
         </div>
       </div>
     </div>

@@ -19,8 +19,7 @@ export const LcdReader: React.FC = () => {
 
   // カメラ & 設定
   const [isStreaming, setIsStreaming] = useState(false);
-  const [confThreshold, setConfThreshold] = useState<number>(0.70);
-  const [convertMono, setConvertMono] = useState<boolean>(true);
+  const [confThreshold, setConfThreshold] = useState<number>(0.40);
   const zoomLevel = 1.0;
   const [showSettings, setShowSettings] = useState<boolean>(false);
 
@@ -196,7 +195,7 @@ export const LcdReader: React.FC = () => {
 
     if (!isInferringRef.current) {
       isInferringRef.current = true;
-      runInference(video, confThreshold, convertMono)
+      runInference(video, confThreshold, true)
         .then((res) => {
           latestResultRef.current = res;
           setCurrentResult(res);
@@ -240,7 +239,7 @@ export const LcdReader: React.FC = () => {
     }
 
     animationFrameId.current = requestAnimationFrame(processLoop);
-  }, [modelLoaded, confThreshold, convertMono, isSleeping, enterSleepMode]);
+  }, [modelLoaded, confThreshold, isSleeping, enterSleepMode]);
 
   // バックグラウンド移行イベント (visibilitychange)
   useEffect(() => {
@@ -261,10 +260,12 @@ export const LcdReader: React.FC = () => {
       animationFrameId.current = requestAnimationFrame(processLoop);
     } else if (animationFrameId.current) {
       cancelAnimationFrame(animationFrameId.current);
+      animationFrameId.current = null;
     }
     return () => {
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
+        animationFrameId.current = null;
       }
     };
   }, [isStreaming, modelLoaded, isSleeping, processLoop]);
@@ -341,8 +342,6 @@ export const LcdReader: React.FC = () => {
         <SettingsPanel
           confThreshold={confThreshold}
           onConfThresholdChange={setConfThreshold}
-          convertMono={convertMono}
-          onToggleMono={() => setConvertMono(!convertMono)}
           onClose={() => setShowSettings(false)}
         />
       )}
