@@ -44,7 +44,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             lineHeight: 1.2,
           }}
         >
-          7Seg AI Reader
+          デジタルメーター読取
         </span>
 
         {/* 2行目: ステータス情報 (FPS / 推論時間 / プロバイダー) */}

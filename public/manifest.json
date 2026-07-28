@@ -1,6 +1,6 @@
 {
-  "name": "7Seg AI Reader",
-  "short_name": "7Seg AI Reader",
+  "name": "デジタルメーター読取",
+  "short_name": "デジタルメーター読取",
   "description": "7セグメント液晶デジタルの高精度リアルタイムAI読み取りアプリ",
   "start_url": "/",
   "display": "standalone",
