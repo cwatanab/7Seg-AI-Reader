@@ -147,8 +147,6 @@ export const LcdReader: React.FC = () => {
 
   const isInferringRef = useRef(false);
   const latestResultRef = useRef<InferenceResult | null>(null);
-  const lastProcessTimeRef = useRef<number>(0);
-  const targetFpsInterval = 1000 / 5; // 5 FPS (200ms間隔)
 
   // 推論ループ
   const processLoop = useCallback(() => {
@@ -165,13 +163,6 @@ export const LcdReader: React.FC = () => {
       enterSleepMode();
       return;
     }
-
-    const elapsed = now - lastProcessTimeRef.current;
-    if (elapsed < targetFpsInterval) {
-      animationFrameId.current = requestAnimationFrame(processLoop);
-      return;
-    }
-    lastProcessTimeRef.current = now - (elapsed % targetFpsInterval);
 
     const video = videoRef.current;
 
