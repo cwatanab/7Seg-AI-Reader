@@ -26,13 +26,16 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         transform: 'translateX(-50%)',
         zIndex: 30,
         height: 'auto',
-        padding: '7px 8px 7px 16px',
+        minHeight: '38px',
+        padding: '6px 8px 6px 16px',
         display: 'inline-flex',
         alignItems: 'center',
         gap: '12px',
+        whiteSpace: 'nowrap',
+        maxWidth: 'calc(100vw - 32px)',
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', whiteSpace: 'nowrap' }}>
         {/* 1行目: アプリケーションタイトル */}
         <span
           style={{
@@ -42,6 +45,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             fontFamily: 'var(--font-display)',
             letterSpacing: '0.3px',
             lineHeight: 1.2,
+            whiteSpace: 'nowrap',
           }}
         >
           デジタルメーター読取
@@ -57,18 +61,19 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             fontVariantNumeric: 'tabular-nums',
             fontFamily: 'var(--font-mono)',
             lineHeight: 1.2,
+            whiteSpace: 'nowrap',
           }}
         >
-          <div className="apple-badge-dot" style={{ width: '6px', height: '6px' }} />
-          <span style={{ display: 'inline-block', minWidth: '40px', textAlign: 'left' }}>
+          <div className="apple-badge-dot" style={{ width: '6px', height: '6px', flexShrink: 0 }} />
+          <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>
             FPS: {fps}
           </span>
-          <span style={{ color: 'var(--apple-ink-muted-48)' }}>|</span>
-          <span style={{ display: 'inline-block', minWidth: '36px', textAlign: 'right' }}>
+          <span style={{ color: 'var(--apple-ink-muted-48)', flexShrink: 0 }}>|</span>
+          <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>
             {inferenceTime.toFixed(0)}ms
           </span>
-          <span style={{ color: 'var(--apple-ink-muted-48)' }}>|</span>
-          <span style={{ color: 'var(--apple-primary)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+          <span style={{ color: 'var(--apple-ink-muted-48)', flexShrink: 0 }}>|</span>
+          <span style={{ color: 'var(--apple-primary)', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
             {providerName}
           </span>
         </div>
@@ -79,7 +84,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         onClick={onToggleSettings}
         className="apple-unified-bar-action"
         aria-label="Settings"
-        style={{ width: '30px', height: '30px' }}
+        style={{ width: '30px', height: '30px', flexShrink: 0 }}
       >
         <Sliders size={15} />
       </button>

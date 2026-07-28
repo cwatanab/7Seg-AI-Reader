@@ -361,7 +361,8 @@ html, body {
 
 /* Single Unified Floating Bar (Slim & Compact fit-content status + settings) */
 .apple-unified-bar {
-  height: 38px;
+  height: auto;
+  min-height: 38px;
   width: fit-content;
   background-color: var(--apple-surface-chip-translucent);
   backdrop-filter: saturate(180%) blur(16px);
