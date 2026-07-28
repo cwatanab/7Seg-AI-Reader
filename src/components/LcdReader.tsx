@@ -321,7 +321,6 @@ export const LcdReader: React.FC = () => {
 
       {/* ヘッダーバー (2行統合単一カプセル) */}
       <HeaderBar
-        fps={fps}
         inferenceTime={inferenceTime}
         providerName={providerName}
         showSettings={showSettings}

@@ -2,7 +2,6 @@ import React from 'react';
 import { Sliders } from 'lucide-react';
 
 interface HeaderBarProps {
-  fps: number;
   inferenceTime: number;
   providerName: string;
   showSettings: boolean;
@@ -10,7 +9,6 @@ interface HeaderBarProps {
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
-  fps,
   inferenceTime,
   providerName,
   showSettings,
@@ -51,7 +49,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           デジタルメーター読取
         </span>
 
-        {/* 2行目: ステータス情報 (FPS / 推論時間 / プロバイダー) */}
+        {/* 2行目: ステータス情報 (推論時間 / プロバイダー) */}
         <div
           style={{
             display: 'flex',
@@ -65,10 +63,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           }}
         >
           <div className="apple-badge-dot" style={{ width: '6px', height: '6px', flexShrink: 0 }} />
-          <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>
-            FPS: {fps}
-          </span>
-          <span style={{ color: 'var(--apple-ink-muted-48)', flexShrink: 0 }}>|</span>
           <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>
             {inferenceTime.toFixed(0)}ms
           </span>
