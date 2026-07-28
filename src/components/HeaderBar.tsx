@@ -37,7 +37,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         {/* 1行目: アプリケーションタイトル */}
         <span
           style={{
-            fontSize: '13px',
+            fontSize: '15px',
             fontWeight: 700,
             color: 'var(--apple-ink)',
             fontFamily: 'var(--font-display)',
